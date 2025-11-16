@@ -5,6 +5,9 @@ An immersive, audio-reactive visualization system that spans multiple monitors w
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Python](https://img.shields.io/badge/python-3.8+-green)
 ![Platform](https://img.shields.io/badge/platform-linux-lightgrey)
+![Security](https://img.shields.io/badge/security-scanned-brightgreen)
+![Bandit](https://img.shields.io/badge/bandit-passing-success)
+![CodeQL](https://github.com/ebman/reactive-screen/workflows/Security%20Scan/badge.svg)
 
 ## ✨ Features
 
@@ -15,6 +18,19 @@ An immersive, audio-reactive visualization system that spans multiple monitors w
 - **💫 Beat-Synchronized** - Pulsing effects that follow the music
 - **🌫️ Atmospheric Effects** - Optional fog and cloud-like rendering
 - **⚡ 60 FPS Performance** - Smooth, hardware-accelerated graphics
+
+## 🔒 Security
+
+This project takes security seriously and uses automated scanning to ensure code safety:
+
+- **🛡️ Bandit** - Python security linter (scans for common vulnerabilities)
+- **🔍 CodeQL** - GitHub's semantic code analysis engine
+- **📦 Safety** - Dependency vulnerability scanner
+- **🐚 ShellCheck** - Bash script security analysis
+
+All security scans run automatically on every commit and weekly. View the [Security Policy](SECURITY.md) for details.
+
+**No hardcoded secrets** • **No malicious code** • **Safe dependencies** • **Open source & auditable**
 
 ## 🎭 Available Versions
 
@@ -430,6 +446,8 @@ sudo apt-get install python3-pygame
 ```
 reactive-screen/
 ├── README.md                    # This file
+├── SECURITY.md                  # Security policy and practices
+├── requirements.txt             # Python dependencies
 ├── install.sh                   # Auto-installer for all distros
 ├── monitor_config.py            # Monitor detection system
 ├── start-light-show.sh          # Main launcher (menu)
@@ -437,6 +455,9 @@ reactive-screen/
 ├── light-show-smokey.py         # Smokey version
 ├── light-show-fluffy.py         # Fluffy version
 ├── monitor_config.json          # Generated monitor config (gitignored)
+├── .github/
+│   └── workflows/
+│       └── security-scan.yml    # Automated security scanning
 ├── light-show.html              # Original HTML version (legacy)
 └── light-show-v1.html           # HTML variant (legacy)
 ```
