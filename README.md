@@ -74,13 +74,37 @@ Like Regular but with no harsh edges - everything soft and cloud-like.
 
 ## 🚀 Installation
 
-### Requirements
+### Quick Install (Recommended)
+
+**One command to install everything:**
+```bash
+git clone https://github.com/ebman/reactive-screen.git
+cd reactive-screen
+./install.sh
+```
+
+The install script will:
+- ✅ Auto-detect your Linux distro
+- ✅ Install all system dependencies
+- ✅ Install Python packages
+- ✅ Set up permissions
+- ✅ Verify X11 compatibility
+
+Supports: Ubuntu, Debian, Mint, Fedora, RHEL, CentOS, Arch, Manjaro, openSUSE
+
+---
+
+### Manual Installation
+
+If you prefer to install manually or the auto-installer doesn't work:
+
+#### Requirements
 - **X11 display server** (not Wayland)
 - **Python 3.8+**
 - **xrandr, xdotool, wmctrl** (X11 tools)
 - **PortAudio** (audio backend)
 
-### 1. Install System Dependencies
+#### 1. Install System Dependencies
 
 #### Ubuntu/Debian/Mint
 ```bash
@@ -406,11 +430,13 @@ sudo apt-get install python3-pygame
 ```
 reactive-screen/
 ├── README.md                    # This file
+├── install.sh                   # Auto-installer for all distros
+├── monitor_config.py            # Monitor detection system
 ├── start-light-show.sh          # Main launcher (menu)
-├── start-native-show.sh         # Direct launcher
 ├── light-show-triple.py         # Regular version
 ├── light-show-smokey.py         # Smokey version
 ├── light-show-fluffy.py         # Fluffy version
+├── monitor_config.json          # Generated monitor config (gitignored)
 ├── light-show.html              # Original HTML version (legacy)
 └── light-show-v1.html           # HTML variant (legacy)
 ```
