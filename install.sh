@@ -19,7 +19,6 @@ fi
 if [ -f /etc/os-release ]; then
     . /etc/os-release
     DISTRO=$ID
-    DISTRO_LIKE=$ID_LIKE
 else
     echo "❌ Error: Cannot detect Linux distribution"
     exit 1
