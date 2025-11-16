@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Light Show</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body {
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .light {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(40px);
+            animation: float 3s infinite ease-in-out;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) scale(1); }
+            50% { transform: translateY(-30px) scale(1.2); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes rainbow {
+            0% { background: linear-gradient(45deg, #ff0000, #ff7f00); }
+            14% { background: linear-gradient(45deg, #ff7f00, #ffff00); }
+            28% { background: linear-gradient(45deg, #ffff00, #00ff00); }
+            42% { background: linear-gradient(45deg, #00ff00, #0000ff); }
+            56% { background: linear-gradient(45deg, #0000ff, #4b0082); }
+            70% { background: linear-gradient(45deg, #4b0082, #9400d3); }
+            84% { background: linear-gradient(45deg, #9400d3, #ff0000); }
+            100% { background: linear-gradient(45deg, #ff0000, #ff7f00); }
+        }
+
+        body {
+            animation: rainbow 10s infinite;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px white;
+        }
+
+        .message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-family: Arial, sans-serif;
+            font-size: 3em;
+            text-shadow: 0 0 20px rgba(255,255,255,0.8);
+            animation: pulse 2s infinite;
+            z-index: 1000;
+        }
+
+        #waveformCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 500;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+    <canvas id="waveformCanvas"></canvas>
+    <div class="container" id="container"></div>
+    <div class="message" id="message">Enjoy the Show!</div>
+
+    <script>
+        const container = document.getElementById('container');
+        const colors = [
+            'radial-gradient(circle, rgba(255,0,255,0.8), rgba(255,0,255,0))',
+            'radial-gradient(circle, rgba(0,255,255,0.8), rgba(0,255,255,0))',
+            'radial-gradient(circle, rgba(255,255,0,0.8), rgba(255,255,0,0))',
+            'radial-gradient(circle, rgba(255,0,0,0.8), rgba(255,0,0,0))',
+            'radial-gradient(circle, rgba(0,255,0,0.8), rgba(0,255,0,0))',
+            'radial-gradient(circle, rgba(0,0,255,0.8), rgba(0,0,255,0))',
+        ];
+
+        let lights = [];
+        let audioContext, analyser, dataArray, bufferLength;
+        let isAudioActive = false;
+
+        // Create floating lights
+        for (let i = 0; i < 15; i++) {
+            const light = document.createElement('div');
+            light.className = 'light';
+            light.style.width = Math.random() * 300 + 150 + 'px';
+            light.style.height = light.style.width;
+            light.style.left = Math.random() * 100 + '%';
+            light.style.top = Math.random() * 100 + '%';
+            light.style.background = colors[Math.floor(Math.random() * colors.length)];
+            light.style.animationDelay = Math.random() * 3 + 's';
+            light.style.animationDuration = Math.random() * 3 + 2 + 's';
+            container.appendChild(light);
+            lights.push(light);
+        }
+
+        // Setup audio reactivity
+        async function setupAudio() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                const source = audioContext.createMediaStreamSource(stream);
+
+                analyser.fftSize = 256;
+                bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+
+                source.connect(analyser);
+                isAudioActive = true;
+                visualize();
+            } catch (err) {
+                console.log('Microphone access denied, using default animation');
+            }
+        }
+
+        // Audio visualization
+        function visualize() {
+            if (!isAudioActive) return;
+
+            requestAnimationFrame(visualize);
+            analyser.getByteFrequencyData(dataArray);
+
+            // Calculate average volume
+            const average = dataArray.reduce((a, b) => a + b) / bufferLength;
+            const normalized = average / 255;
+
+            // Get bass, mid, and treble
+            const bass = dataArray.slice(0, bufferLength / 3).reduce((a, b) => a + b) / (bufferLength / 3);
+            const mid = dataArray.slice(bufferLength / 3, 2 * bufferLength / 3).reduce((a, b) => a + b) / (bufferLength / 3);
+            const treble = dataArray.slice(2 * bufferLength / 3).reduce((a, b) => a + b) / (bufferLength / 3);
+
+            // React to audio - ULTRA SENSITIVE TO BEATS
+            lights.forEach((light, index) => {
+                const freq = index % 3 === 0 ? bass : (index % 3 === 1 ? mid : treble);
+                const scale = 1 + (freq / 255) * 5;  // Way more sensitive
+                const blur = 40 + (freq / 255) * 180;  // Triple blur range
+
+                light.style.transform = `scale(${scale})`;
+                light.style.filter = `blur(${blur}px)`;
+                light.style.opacity = 0.3 + (normalized * 0.7);  // Even more dramatic
+            });
+
+            // Create sparkles on beats - SUPER SENSITIVE
+            if (bass > 80) {  // Very low threshold
+                const count = Math.floor((bass / 255) * 15);  // Tons of sparkles
+                for (let i = 0; i < count; i++) {
+                    createSparkle();
+                }
+            }
+
+            // Flash the message on big beats
+            const message = document.getElementById('message');
+            if (bass > 200) {
+                message.style.transform = `translate(-50%, -50%) scale(${1 + (bass / 255) * 0.5})`;
+                message.style.textShadow = `0 0 ${20 + bass}px rgba(255,255,255,0.8)`;
+            } else {
+                message.style.transform = 'translate(-50%, -50%) scale(1)';
+            }
+        }
+
+        // Create sparkles
+        function createSparkle() {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = Math.random() * 100 + '%';
+            sparkle.style.top = Math.random() * 100 + '%';
+            sparkle.style.animation = `pulse ${Math.random() * 2 + 1}s ease-in-out`;
+            container.appendChild(sparkle);
+
+            setTimeout(() => sparkle.remove(), 2000);
+        }
+
+        if (!isAudioActive) {
+            setInterval(createSparkle, 100);
+        }
+
+        // Make lights move around
+        setInterval(() => {
+            lights.forEach(light => {
+                light.style.transition = 'all 2s ease-in-out';
+                light.style.left = Math.random() * 100 + '%';
+                light.style.top = Math.random() * 100 + '%';
+            });
+        }, 3000);
+
+        // Fullscreen functionality
+        function goFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.webkitRequestFullscreen) {
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) {
+                elem.msRequestFullscreen();
+            }
+        }
+
+        // Auto-fullscreen on click
+        document.body.addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                goFullscreen();
+            }
+        });
+
+        // Exit on ESC or any key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' || e.key === 'q' || e.key === 'Q') {
+                if (document.fullscreenElement) {
+                    document.exitFullscreen();
+                }
+            } else if (e.key === 'f' || e.key === 'F') {
+                goFullscreen();
+            }
+        });
+
+        // Auto-fullscreen after 2 seconds, THEN request microphone
+        setTimeout(() => {
+            goFullscreen();
+            // Wait for fullscreen to settle before requesting mic
+            setTimeout(() => {
+                setupAudio();
+            }, 1000);
+        }, 2000);
+
+        // Waveform visualization
+        const canvas = document.getElementById('waveformCanvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        function drawWaveform() {
+            requestAnimationFrame(drawWaveform);
+
+            if (!analyser) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            analyser.getByteFrequencyData(dataArray);
+
+            // Draw circular frequency bars
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) / 4;
+            const barCount = 128;
+
+            for (let i = 0; i < barCount; i++) {
+                const angle = (i / barCount) * Math.PI * 2;
+                const barHeight = (dataArray[i] / 255) * 200;
+
+                const x1 = centerX + Math.cos(angle) * radius;
+                const y1 = centerY + Math.sin(angle) * radius;
+                const x2 = centerX + Math.cos(angle) * (radius + barHeight);
+                const y2 = centerY + Math.sin(angle) * (radius + barHeight);
+
+                const hue = (i / barCount) * 360;
+                const alpha = 0.6 + (dataArray[i] / 255) * 0.4;
+
+                ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${alpha})`;
+                ctx.lineWidth = 3;
+                ctx.shadowBlur = 20;
+                ctx.shadowColor = `hsla(${hue}, 100%, 50%, 0.8)`;
+
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+            }
+
+            // Draw outer frequency bars at edges
+            const barWidth = canvas.width / bufferLength;
+            for (let i = 0; i < bufferLength; i++) {
+                const barHeight = (dataArray[i] / 255) * canvas.height * 0.4;
+                const x = i * barWidth;
+                const hue = (i / bufferLength) * 360;
+
+                // Bottom bars
+                ctx.fillStyle = `hsla(${hue}, 100%, 50%, 0.5)`;
+                ctx.fillRect(x, canvas.height - barHeight, barWidth - 2, barHeight);
+
+                // Top bars (mirrored)
+                ctx.fillRect(x, 0, barWidth - 2, barHeight);
+            }
+
+            // Reset shadow
+            ctx.shadowBlur = 0;
+        }
+
+        drawWaveform();
+    </script>
+</body>
+</html>
