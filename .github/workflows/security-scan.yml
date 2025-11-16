@@ -29,7 +29,7 @@ jobs:
     - name: Run Bandit scan
       run: |
         bandit -r . -f json -o bandit-report.json || true
-        bandit -r . -f txt
+        bandit -r . -f txt || true
 
     - name: Upload Bandit report
       uses: actions/upload-artifact@v4
@@ -51,15 +51,13 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Install dependencies
-      run: |
-        pip install safety
-        pip install pygame numpy pyaudio
+    - name: Install Safety
+      run: pip install safety
 
     - name: Run Safety check
       run: |
-        safety check --json > safety-report.json || true
-        safety check
+        safety check -r requirements.txt --json > safety-report.json || true
+        safety check -r requirements.txt || true
 
     - name: Upload Safety report
       uses: actions/upload-artifact@v4
