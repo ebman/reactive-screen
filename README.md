@@ -9,7 +9,7 @@ An immersive, audio-reactive visualization system that spans multiple monitors w
 ## ✨ Features
 
 - **🎵 Real-time Audio Reactivity** - Responds to microphone input with FFT analysis
-- **🖥️ Multi-Monitor Spanning** - Seamlessly spans across 3 monitors (5760x1080)
+- **🖥️ Flexible Multi-Monitor Spanning** - Auto-detects and spans any number of monitors
 - **🎨 Three Unique Versions** - Choose your visual aesthetic
 - **🔮 Organic Visuals** - Fractals, kaleidoscopes, and flowing particles
 - **💫 Beat-Synchronized** - Pulsing effects that follow the music
@@ -58,7 +58,7 @@ Like Regular but with no harsh edges - everything soft and cloud-like.
 
 ### System Requirements
 - **OS**: Linux (tested on Ubuntu 20.04)
-- **Display**: 3 monitors at 1920x1080 each (5760x1080 total)
+- **Display**: Any number of monitors (auto-detected via xrandr)
 - **Audio**: Microphone input
 - **Python**: 3.8 or higher
 
@@ -130,6 +130,53 @@ python3 light-show-fluffy.py
 ### Keyboard Controls
 - **ESC** or **Q** - Exit the light show
 - The show will automatically restore your taskbar/panels on exit
+
+## 🖥️ Monitor Configuration
+
+The light show automatically detects your monitor setup using xrandr and adapts to any configuration.
+
+### Auto-Detection
+On first run, the system will:
+1. Detect all connected monitors and their positions
+2. Calculate total screen dimensions
+3. Save configuration to `monitor_config.json`
+4. Use this config for all subsequent launches
+
+```bash
+# Force re-detection (deletes saved config)
+rm monitor_config.json
+./start-light-show.sh
+
+# Or manually run detection
+python3 monitor_config.py
+```
+
+### Supported Layouts
+- **Horizontal**: Monitors side-by-side (most common)
+- **Vertical**: Monitors stacked
+- **Mixed**: Any combination detected by xrandr
+- **Any count**: 1, 2, 3, 4+ monitors supported
+
+### Manual Configuration
+If auto-detection fails, you can manually configure:
+
+```bash
+python3 monitor_config.py
+# Follow prompts to enter:
+# - Number of monitors
+# - Resolution per monitor
+# - Layout (horizontal/vertical)
+```
+
+### Viewing Current Config
+```bash
+cat monitor_config.json
+# Shows:
+# - Number of monitors
+# - Each monitor's position and size
+# - Total dimensions
+# - Center points for visualization
+```
 
 ## 🎨 Visual Effects Breakdown
 

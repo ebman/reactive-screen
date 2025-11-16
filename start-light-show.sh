@@ -2,13 +2,36 @@
 # Light Show Launcher - Choose between regular or smokey version
 
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-TOTAL_WIDTH=5760
-TOTAL_HEIGHT=1080
+CONFIG_FILE="$SCRIPT_DIR/monitor_config.json"
 
 echo "========================================="
 echo "  REACTIVE LIGHT SHOW LAUNCHER"
 echo "========================================="
+echo ""
+
+# Check for monitor configuration
+if [ ! -f "$CONFIG_FILE" ]; then
+    echo "No monitor configuration found. Running auto-detection..."
+    python3 "$SCRIPT_DIR/monitor_config.py" || {
+        echo "Failed to detect monitors. Using default: 3 monitors at 1920x1080"
+        TOTAL_WIDTH=5760
+        TOTAL_HEIGHT=1080
+    }
+fi
+
+# Read monitor configuration from JSON
+if [ -f "$CONFIG_FILE" ]; then
+    TOTAL_WIDTH=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['total_width'])")
+    TOTAL_HEIGHT=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['total_height'])")
+    NUM_MONITORS=$(python3 -c "import json; print(json.load(open('$CONFIG_FILE'))['num_monitors'])")
+    echo "Detected configuration: $NUM_MONITORS monitor(s), ${TOTAL_WIDTH}x${TOTAL_HEIGHT}"
+else
+    TOTAL_WIDTH=5760
+    TOTAL_HEIGHT=1080
+    NUM_MONITORS=3
+    echo "Using default configuration: $NUM_MONITORS monitor(s), ${TOTAL_WIDTH}x${TOTAL_HEIGHT}"
+fi
+
 echo ""
 echo "Choose your version:"
 echo "  1) Regular - Clean organic fractals with glowing orbs"

@@ -11,6 +11,7 @@ import math
 import sys
 import os
 from pygame.locals import *
+from monitor_config import MonitorConfig
 
 # Audio configuration
 CHUNK = 1024
@@ -57,15 +58,23 @@ class LightShow:
 
         pygame.init()
 
-        # 3 monitors at 1920x1080 each
-        self.monitor_width = 1920
-        self.monitor_height = 1080
-        self.num_monitors = 3
-        self.width = self.monitor_width * self.num_monitors  # 5760
-        self.height = self.monitor_height
+        # Load or auto-detect monitor configuration
+        config = MonitorConfig()
+        if not config.load_config():
+            print("No saved config found, auto-detecting monitors...")
+            if not config.auto_detect():
+                print("Auto-detection failed, using fallback: 3 monitors at 1920x1080")
+                config.manual_config(3, 1920, 1080, 'horizontal')
+
+        # Use detected/loaded configuration
+        self.num_monitors = config.num_monitors
+        self.width = config.total_width
+        self.height = config.total_height
+        self.monitors = config.monitors
+        self.monitor_centers = config.get_monitor_centers()
 
         print(f"Creating borderless window: {self.width}x{self.height}")
-        print(f"Will render on {self.num_monitors} monitors ({self.monitor_width}x{self.monitor_height} each)")
+        print(f"Will render on {self.num_monitors} monitors")
 
         # Borderless window
         self.screen = pygame.display.set_mode(
@@ -152,9 +161,8 @@ class LightShow:
 
     def draw_on_monitor(self, monitor_index, freq_data, bass, mid, treble, average):
         """Draw the full visualization on a single monitor with BIGGER effects that OVERLAP"""
-        # Calculate center for this monitor
-        center_x = monitor_index * self.monitor_width + self.monitor_width // 2
-        center_y = self.monitor_height // 2
+        # Get center for this monitor from actual configuration
+        center_x, center_y = self.monitor_centers[monitor_index]
 
         # BIGGER global pulse for more overlap
         global_pulse = 1 + (bass / 255) * 0.5 + (average / 255) * 0.3
@@ -253,7 +261,8 @@ class LightShow:
         for r in range(ring_count):
             progress = ((r + self.time * 10) % ring_count) / ring_count
             # Can extend beyond monitor boundaries!
-            radius = int(progress * self.monitor_width * 1.2 * global_pulse)
+            monitor_width = self.monitors[monitor_index]['width']
+            radius = int(progress * monitor_width * 1.2 * global_pulse)
 
             freq_idx = int(progress * len(freq_data)) % len(freq_data)
             intensity = freq_data[freq_idx] / 255
@@ -467,8 +476,7 @@ class LightShow:
             for i in range(num_rings):
                 # Rings emanate from monitor centers
                 monitor = i % self.num_monitors
-                cx = monitor * self.monitor_width + self.monitor_width // 2
-                cy = self.height // 2
+                cx, cy = self.monitor_centers[monitor]
 
                 # Expanding pulse
                 phase = (self.time * 3 + i * 0.5) % 1
