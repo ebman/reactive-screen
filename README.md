@@ -57,7 +57,9 @@ Like Regular but with no harsh edges - everything soft and cloud-like.
 ## 📋 Requirements
 
 ### System Requirements
-- **OS**: Linux (tested on Ubuntu 20.04)
+- **OS**: Linux with X11 (works on Ubuntu, Fedora, Arch, openSUSE, Mint, etc.)
+  - ✅ X11 display server (required)
+  - ❌ Wayland not supported (use X11 session instead)
 - **Display**: Any number of monitors (auto-detected via xrandr)
 - **Audio**: Microphone input
 - **Python**: 3.8 or higher
@@ -72,23 +74,53 @@ Like Regular but with no harsh edges - everything soft and cloud-like.
 
 ## 🚀 Installation
 
+### Requirements
+- **X11 display server** (not Wayland)
+- **Python 3.8+**
+- **xrandr, xdotool, wmctrl** (X11 tools)
+- **PortAudio** (audio backend)
+
 ### 1. Install System Dependencies
+
+#### Ubuntu/Debian/Mint
 ```bash
 sudo apt-get update
 sudo apt-get install -y python3 python3-pip portaudio19-dev xdotool wmctrl
 ```
 
+#### Fedora/RHEL/CentOS
+```bash
+sudo dnf install python3 python3-pip portaudio-devel xdotool wmctrl
+```
+
+#### Arch/Manjaro
+```bash
+sudo pacman -S python python-pip portaudio xdotool wmctrl
+```
+
+#### openSUSE
+```bash
+sudo zypper install python3 python3-pip portaudio-devel xdotool wmctrl
+```
+
 ### 2. Install Python Packages
 ```bash
-pip3 install --user pygame numpy
-sudo apt-get install -y python3-pyaudio
+# All distros - install via pip
+pip3 install --user pygame numpy pyaudio
 ```
 
 ### 3. Clone/Download Project
 ```bash
-cd ~/reactive-screen
-chmod +x start-light-show.sh
-chmod +x start-native-show.sh
+git clone https://github.com/ebman/reactive-screen.git
+cd reactive-screen
+chmod +x start-light-show.sh monitor_config.py
+```
+
+### 4. Verify X11 (Not Wayland)
+```bash
+echo $XDG_SESSION_TYPE
+# Should output: x11
+# If it says "wayland", you need to switch to X11 session at login
 ```
 
 ## 🎮 Usage
@@ -302,14 +334,33 @@ The launcher script handles:
 
 ## 🐛 Troubleshooting
 
+### Issue: "xrandr: command not found" or window doesn't span
+**Cause**: Running on Wayland instead of X11
+
+**Solution**:
+```bash
+# Check your display server
+echo $XDG_SESSION_TYPE
+
+# If it says "wayland":
+# 1. Log out
+# 2. At login screen, click gear icon
+# 3. Select "Ubuntu on Xorg" or "GNOME on Xorg"
+# 4. Log back in
+```
+
 ### Issue: Show only appears on one monitor
 **Solution**:
 ```bash
 # Check your monitor setup
 xrandr --query
 
-# Ensure TOTAL_WIDTH and TOTAL_HEIGHT match in start-light-show.sh
-# For 3x 1920x1080 monitors, it should be 5760x1080
+# Force re-detection
+rm monitor_config.json
+./start-light-show.sh
+
+# Manual configuration if auto-detect fails
+python3 monitor_config.py
 ```
 
 ### Issue: No sound detected / orbs not appearing
